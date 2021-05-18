@@ -1,0 +1,93 @@
+import 'dart:async';
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import '../components/index.dart' show ComponentCenter;
+
+class ListContentState extends State<ListContent> {
+  var list = [];
+  var title = 'First App';
+  final _componentCenter = new ComponentCenter();
+  bool _requesting = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return new Scaffold(
+        appBar: new AppBar(title: new Text(title)),
+        body: new FutureBuilder(
+            future: DefaultAssetBundle.of(context).loadString('mock/list.json'),
+            builder: (context, snapshot) {
+              if (snapshot.data == null) {
+                return new CircularProgressIndicator();
+              }
+              if (this.list.length <= 0) {
+                this.list = json.decode(snapshot.data.toString())['data'];
+              }
+              return _getList(this.list);
+            }));
+  }
+
+  Widget _getList(listData) {
+    return new GestureDetector(
+        onTap: () {
+          print('taping');
+        },
+        child: new NotificationListener(
+            onNotification: (ScrollNotification notification) {
+              ScrollMetrics matrix = notification.metrics;
+              if (matrix.extentAfter < 50 && _requesting != true) {
+                _requesting = true;
+                new Timer(new Duration(seconds: 5), () {
+                  _requesting = false;
+                  print('fa qingqiu le ');
+                  setState(() {
+                    this.title = '2333';
+                  });
+                });
+              }
+            },
+            child: new ListView.builder(
+                padding: EdgeInsets.all(10.0),
+                itemBuilder: (context, i) {
+                  if (i < listData.length) {
+                    return new Column(
+                      children: [
+                        new Container(
+                            height: 114, child: _getItem(listData[i])),
+                        new Divider()
+                      ],
+                    );
+                  }
+                  return null;
+                })));
+  }
+
+  Widget _getItem(itemInfo) {
+    switch (itemInfo["type"]) {
+      case 'multiplePic':
+        return _componentCenter.getMultiplePic(itemInfo);
+      case 'singlePic':
+        return _componentCenter.getSinglePic(itemInfo);
+      default:
+        return _componentCenter.getDefault();
+    }
+  }
+}
+
+class ListContent extends StatefulWidget {
+  @override
+  createState() {
+    return new ListContentState();
+  }
+}
+
+class MyApp extends StatelessWidget {
+  // This widget is the root of your application.
+  @override
+  Widget build(BuildContext context) {
+    // 一定要重写buid方法 返回一套组件
+    return MaterialApp(
+      title: 'First Flutter',
+      home: new ListContent(),
+    );
+  }
+}
